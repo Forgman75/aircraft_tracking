@@ -23,4 +23,9 @@ class OpenSkyAPI(APIAdapter):
 
         response.raise_for_status()
 
-        return response.json()
+        data = response.json()
+
+        states_data = data.get("states")
+        if states_data:
+            return states_data
+        return []       
