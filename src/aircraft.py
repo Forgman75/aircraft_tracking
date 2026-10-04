@@ -63,9 +63,22 @@ class Aircraft:
         return cls(**data)
 
     @classmethod
-    def cast_to_object_list(cls, country_aircraftes):
+    def cast_to_object_list(cls, raw_api_data: list) -> list:
+        """
+        Преобразует данные OpenSky API в список объектов Aircraft.
+
+        Индексы OpenSky:
+        1 — callsign
+        2 — origin_country
+        9 — velocity
+        13 — geo_altitude
+        """
         result = []
-        for item in country_aircraftes:
+
+        if not isinstance(raw_api_data, list):
+            return result
+
+        for item in raw_api_data:
             if len(item) < 14:
                 continue
                    
@@ -79,7 +92,7 @@ class Aircraft:
 
                 one_aircraft = cls.from_dict(aircraft_dict)
                 result.append(one_aircraft)
-            except ValueError:
+            except (ValueError, TypeError):
                 continue
 
         return result
