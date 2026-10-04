@@ -21,6 +21,9 @@ class OpenSkyAPI(APIAdapter):
             params=params
         )
 
+        if response.status_code == 429:
+            raise RuntimeError("Превышен лимит запросов к OpenSky Network (Too Many Requests). Попробуйте через минуту.")
+
         response.raise_for_status()
 
         data = response.json()
