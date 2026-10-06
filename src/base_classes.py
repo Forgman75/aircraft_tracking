@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from src.aircraft import Aircraft
 
 
 class APIAdapter(ABC):
@@ -8,3 +9,20 @@ class APIAdapter(ABC):
     def get_data(self, **kwargs):
         """Получение данных из API."""
         pass
+
+
+class BaseStorage(ABC):
+    """Абстрактный класс для хранения данных о самолетах."""
+
+    @abstractmethod
+    def add_aircraft(self, aircraft: Aircraft):
+        pass
+
+    @abstractmethod
+    def get_aircraft(self, **criteria) -> list:
+        pass
+
+    @abstractmethod
+    def delete_aircraft(self, **criteria):
+        pass
+
