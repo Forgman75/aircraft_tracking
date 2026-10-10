@@ -19,6 +19,14 @@ class BaseStorage(ABC):
         pass
 
     @abstractmethod
+    def save_aircraft(self, aircraft_list: list[Aircraft]):
+        pass
+
+    @abstractmethod
+    def load_aircraft(self) -> list[Aircraft]:
+        pass
+    
+    @abstractmethod
     def get_aircraft(self, **criteria) -> list:
         pass
 
