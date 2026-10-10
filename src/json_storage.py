@@ -44,12 +44,82 @@ class JSONStorage(BaseStorage):
         with open(self.file_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
 
-    def add_aircraft(self, aircraft: Aircraft):
+    def add_aircraft(self, aircraft: Aircraft) -> bool:
+        """Добавляет самолет в JSON, если его позывной еще не сохранен.
+
+        Возвращает True, если самолет добавлен,
+        и False, если самолет с таким позывным уже существует.
+        """
+        if not isinstance(aircraft, Aircraft):
+            raise TypeError(
+            "Можно добавлять только объекты класса Aircraft."
+            )
+
         data = self._load_data()
-        # Избегаем дубликатов по позывному
-        if not any(item.get("callsign") == aircraft.callsign for item in data):
+
+        callsign = aircraft.callsign.strip().casefold()
+
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+
+            existing_callsign = item.get("callsign")
+
+            if (
+                isinstance(existing_callsign, str)
+                and existing_callsign.strip().casefold() == callsign
+            ):
+                logger.info(
+                    "Самолет с позывным %s уже существует.",
+                    aircraft.callsign,
+                )
+
+                return False
+                
+        data.append(aircraft.to_dict())
+        self._save_data(data)
+
+        logger.info(
+            "Самолет %s успешно добавлен.",
+            aircraft.callsign,
+        )
+        return True
+
+    def save_aircraft(self, aircraft_list: list[Aircraft]) -> int:
+        """Пакетно добавляет самолеты, исключая дубликаты.
+
+        Возвращает количество добавленных самолетов.
+        """
+        data = self._load_data()
+
+        # Собираем позывные уже сохраненных самолетов.
+        existing_callsigns = {
+            item["callsign"].strip().casefold()
+            for item in data
+            if isinstance(item, dict)
+            and isinstance(item.get("callsign"), str)
+            and item["callsign"].strip()
+        }
+
+        added = 0
+
+        for aircraft in aircraft_list:
+            if not isinstance(aircraft, Aircraft):
+                continue
+
+            callsign = aircraft.callsign.strip().casefold()
+
+            if callsign in existing_callsigns:
+                continue
+
             data.append(aircraft.to_dict())
+            existing_callsigns.add(callsign)
+            added += 1
+
+        if added:
             self._save_data(data)
+
+        return added
 
     def get_aircraft(self, **criteria) -> list:
         data = self._load_data()
@@ -70,7 +140,7 @@ class JSONStorage(BaseStorage):
                 result.append(Aircraft.from_dict(item))
         return result
 
-    def delete_aircraft(self, **criteria):
+    def delete_aircraft(self, **criteria) -> None:
         data = self._load_data()
         new_data = []
         for item in data:
@@ -82,3 +152,7 @@ class JSONStorage(BaseStorage):
             if not match:
                 new_data.append(item)
         self._save_data(new_data)
+
+    def load_aircraft(self) -> list[Aircraft]:
+        raise NotImplementedError()
+
