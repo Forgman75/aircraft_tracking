@@ -128,13 +128,16 @@ def show_menu():
     print("1. Получить топ N самолетов по высоте полета")
     print("2. Получить самолеты по стране их регистрации")
     print("3. Показать все сохраненные самолеты")
-    print("4. Выход")
+    print("4. Фильтрация самолетов по диапазону высот")
+    print("5. Фильтрация самолетов по диапазону скоростей")
+    print("6. Удалить самолет по позывному")
+    print("7. Выход")
     print("-" * 60)
 
 
 def get_menu_choice() -> str:
     """Получает выбор пользователя."""
-    return input("Выберите действие (1-4): ").strip()
+    return input("Выберите действие (1-7): ").strip()
 
 
 def show_top_aircraft(storage: JSONStorage) -> None:
@@ -204,7 +207,7 @@ def show_all_aircraft(storage: JSONStorage) -> None:
     all_aircraft = storage.get_aircraft()
 
     print(
-        f"\n📋 Все сохраненные самолеты "
+        f"\n Все сохраненные самолеты "
         f"({len(all_aircraft)} шт.):"
     )
 
@@ -214,6 +217,131 @@ def show_all_aircraft(storage: JSONStorage) -> None:
 
     for aircraft in all_aircraft:
         print(f"   - {aircraft}")
+
+
+def get_numeric_range(
+    parameter_name: str,
+    unit: str
+) -> tuple[float, float] | None:
+    """Запрашивает минимальное и максимальное значения диапазона."""
+    try:
+        minimum = float(
+            input(f"Введите минимальное значение ({unit}): ").strip()
+        )
+        maximum = float(
+            input(f"Введите максимальное значение ({unit}): ").strip()
+        )
+
+        if minimum < 0 or maximum < 0:
+            print("Значения не могут быть отрицательными.")
+            return None
+
+        if minimum > maximum:
+            print("Минимальное значение не может быть больше максимального.")
+            return None
+
+        return minimum, maximum
+
+    except ValueError:
+        print("Ошибка: введите корректные числовые значения.")
+        return None
+
+
+def show_aircraft_by_speed(storage: JSONStorage) -> None:
+    """Показывает самолеты в заданном диапазоне скоростей."""
+    speed_range = get_numeric_range("скорость", "м/с")
+
+    if speed_range is None:
+        return
+
+    minimum, maximum = speed_range
+
+    aircraft_list = [
+        aircraft
+        for aircraft in storage.get_aircraft()
+        if minimum <= aircraft.speed <= maximum
+    ]
+
+    print(
+        f"\n Самолеты со скоростью от {minimum:g} "
+        f"до {maximum:g} м/с:"
+    )
+
+    if not aircraft_list:
+        print("   Самолеты в заданном диапазоне не найдены.")
+        return
+
+    # Сортируем по скорости, используя is_faster_than().
+    aircraft_list.sort(
+        key=lambda aircraft: aircraft.speed
+    )
+
+    for aircraft in aircraft_list:
+        print(f"   - {aircraft}")
+
+
+def show_aircraft_by_altitude(storage: JSONStorage) -> None:
+    """Выводит самолеты в заданном диапазоне высот."""
+    aircraft_list = storage.get_aircraft()
+
+    if not aircraft_list:
+        print("Список самолетов пуст.")
+        return
+
+    altitude_range = get_numeric_range(
+        "высоты", "м"
+    )
+
+    if altitude_range is None:
+        return
+
+    minimum, maximum = altitude_range
+
+    filtered_aircraft = [
+        aircraft
+        for aircraft in aircraft_list
+        if minimum <= aircraft.altitude <= maximum
+    ]
+
+    if not filtered_aircraft:
+        print("Самолеты в заданном диапазоне высот не найдены.")
+        return
+
+    # Благодаря __lt__ самолеты сортируются по высоте.
+    filtered_aircraft.sort()
+
+    for aircraft in filtered_aircraft:
+        print(aircraft)
+
+
+def delete_aircraft_by_callsign(storage: JSONStorage) -> None:
+    """Удаляет самолет по позывному."""
+    callsign = input(
+        "Введите позывной самолета для удаления: "
+    ).strip()
+
+    if not callsign:
+        print("Ошибка: позывной не может быть пустым.")
+        return
+
+    # Проверяем, существует ли самолет с таким позывным
+    found_aircraft = storage.get_aircraft(callsign=callsign)
+
+    # Учитываем, что get_aircraft может искать подстроку
+    exact_match = [
+        aircraft
+        for aircraft in found_aircraft
+        if aircraft.callsign.casefold() == callsign.casefold()
+    ]
+
+    if not exact_match:
+        print(f"Самолет с позывным '{callsign}' не найден.")
+        return
+
+    storage.delete_aircraft(callsign=callsign)
+
+    print(f"Самолет с позывным '{callsign}' успешно удален.")
+
 
 
 def handle_menu_choice(
@@ -235,13 +363,22 @@ def handle_menu_choice(
         show_all_aircraft(storage)
 
     elif choice == "4":
+        show_aircraft_by_altitude(storage)
+
+    elif choice == "5":
+        show_aircraft_by_speed(storage)
+
+    elif choice == "6":
+        delete_aircraft_by_callsign(storage)
+
+    elif choice == "7":
         print("Выход из программы. До свидания!")
         return False
 
     else:
         print(
             "Неверный выбор. "
-            "Пожалуйста, введите число от 1 до 4."
+            "Пожалуйста, введите число от 1 до 7."
         )
 
     return True
