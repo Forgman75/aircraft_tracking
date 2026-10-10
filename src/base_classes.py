@@ -15,11 +15,11 @@ class BaseStorage(ABC):
     """Абстрактный класс для хранения данных о самолетах."""
 
     @abstractmethod
-    def add_aircraft(self, aircraft: Aircraft):
+    def add_aircraft(self, aircraft: Aircraft) -> bool:
         pass
 
     @abstractmethod
-    def save_aircraft(self, aircraft_list: list[Aircraft]):
+    def save_aircraft(self, aircraft_list: list[Aircraft]) -> int:
         pass
 
     @abstractmethod
@@ -31,6 +31,6 @@ class BaseStorage(ABC):
         pass
 
     @abstractmethod
-    def delete_aircraft(self, **criteria):
+    def delete_aircraft(self, **criteria) -> None:
         pass
 
