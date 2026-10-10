@@ -8,7 +8,7 @@ class NominatimAPI(APIAdapter):
     def __init__(self):
         self.url = "https://nominatim.openstreetmap.org/search"
 
-    def get_data(self, country: str):
+    def get_data(self, country: str) -> list:
         headers = {
             "User-Agent": "test-app/1.0"
         }

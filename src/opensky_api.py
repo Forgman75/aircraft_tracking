@@ -8,7 +8,7 @@ class OpenSkyAPI(APIAdapter):
     def __init__(self):
         self.url = "https://opensky-network.org/api/states/all"
 
-    def get_data(self, boundingbox):
+    def get_data(self, boundingbox: list) -> list:
         params = {
             "lamin": boundingbox[0],
             "lamax": boundingbox[1],
@@ -22,7 +22,7 @@ class OpenSkyAPI(APIAdapter):
         )
 
         if response.status_code == 429:
-            raise RuntimeError("Превышен лимит запросов к OpenSky Network (Too Many Requests). Попробуйте через минуту.")
+            raise RuntimeError("Превышен лимит запросов к OpenSky Network.")
 
         response.raise_for_status()
 
