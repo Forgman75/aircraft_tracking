@@ -4,7 +4,6 @@ from src.opensky_api import OpenSkyAPI
 from src.aircraft import Aircraft
 from src.json_storage import JSONStorage
 
-
 nominatim = NominatimAPI()
 opensky = OpenSkyAPI()
 
@@ -13,7 +12,6 @@ country = "Canada"
 boundingbox = nominatim.get_data(country)
 aircraftes_data = opensky.get_data(boundingbox)
 aircraftes = Aircraft.cast_to_object_list(aircraftes_data)
-
 
 
 print("Координаты страны:", boundingbox)
@@ -34,7 +32,7 @@ storage.add_aircraft(plane3)
 
 # Ищем все японские самолеты
 russian = storage.get_aircraft(country="ger")
-print(f"Найдено российских: {len(russian)}")  # 2
+print(f"Найдено немецких: {len(russian)}")  # 2
 
 # Ищем высокоскоростные
 fast = storage.get_aircraft(speed=270.0)
@@ -46,6 +44,7 @@ storage.delete_aircraft(country="Russia")
 # Проверяем, что осталось
 all_planes = storage.get_aircraft()
 print(f"Всего осталось: {len(all_planes)}")
+
 
 def print_welcome():
     """Выводит приветственное сообщение."""
@@ -69,29 +68,20 @@ def get_country_name() -> str | None:
 
 
 def load_aircraft_from_api(
-    nominatim_api: NominatimAPI,
-    opensky_api: OpenSkyAPI,
-    country_name: str
+    nominatim_api: NominatimAPI, opensky_api: OpenSkyAPI, country_name: str
 ) -> list[Aircraft]:
     """Получает самолеты в воздушном пространстве страны."""
 
     print(
-        f"\n[1/3] Запрос координат для "
-        f"'{country_name}' через Nominatim..."
+        f"\n[1/3] Запрос координат для " f"'{country_name}' через Nominatim..."
     )
 
     boundingbox = nominatim_api.get_data(country_name)
 
     print("   Координаты страны успешно получены.")
 
-    print(
-        "[2/3] Запрос данных о самолетах "
-        "через OpenSky Network..."
-    )
-    print(
-        "   (Это может занять несколько секунд, "
-        "лимиты API строгие)"
-    )
+    print("[2/3] Запрос данных о самолетах " "через OpenSky Network...")
+    print("   (Это может занять несколько секунд, " "лимиты API строгие)")
 
     states = opensky_api.get_data(boundingbox)
 
@@ -105,20 +95,15 @@ def load_aircraft_from_api(
     return aircraft_list
 
 
-def save_aircraft(
-    storage: JSONStorage,
-    aircraft_list: list[Aircraft]
-) -> None:
+def save_aircraft(storage: JSONStorage, aircraft_list: list[Aircraft]) -> None:
     """Сохраняет список самолетов в хранилище."""
     print(
-        "[3/3] Сохранение полученных данных "
-        "в локальное хранилище (JSON)..."
+        "[3/3] Сохранение полученных данных " "в локальное хранилище (JSON)..."
     )
 
-    for aircraft in aircraft_list:
-        storage.add_aircraft(aircraft)
+    count = storage.save_aircraft(aircraft_list)
 
-    print("   Данные успешно сохранены!")
+    print(f"   Успешно сохранено {count} самолетов!")
 
 
 def show_menu():
@@ -144,10 +129,7 @@ def show_top_aircraft(storage: JSONStorage) -> None:
     """Показывает топ N самолетов по высоте."""
     try:
         n = int(
-            input(
-                "Введите количество самолетов "
-                "для топа (N): "
-            ).strip()
+            input("Введите количество самолетов " "для топа (N): ").strip()
         )
 
         if n <= 0:
@@ -160,10 +142,7 @@ def show_top_aircraft(storage: JSONStorage) -> None:
 
     all_aircraft = storage.get_aircraft()
 
-    top_aircraft = sorted(
-        all_aircraft,
-        reverse=True
-    )[:n]
+    top_aircraft = sorted(all_aircraft, reverse=True)[:n]
 
     print(f"\n ТОП-{n} самолетов по высоте:")
 
@@ -177,22 +156,15 @@ def show_top_aircraft(storage: JSONStorage) -> None:
 
 def show_aircraft_by_country(storage: JSONStorage) -> None:
     """Показывает самолеты по стране регистрации."""
-    search_country = input(
-        "Введите страну регистрации для поиска: "
-    ).strip()
+    search_country = input("Введите страну регистрации для поиска: ").strip()
 
     if not search_country:
         print("Ошибка: Страна не может быть пустой.")
         return
 
-    found_aircraft = storage.get_aircraft(
-        country=search_country
-    )
+    found_aircraft = storage.get_aircraft(country=search_country)
 
-    print(
-        f"\n Самолеты, зарегистрированные "
-        f"в '{search_country}':"
-    )
+    print(f"\n Самолеты, зарегистрированные " f"в '{search_country}':")
 
     if not found_aircraft:
         print("   Самолеты не найдены.")
@@ -206,10 +178,7 @@ def show_all_aircraft(storage: JSONStorage) -> None:
     """Показывает все сохраненные самолеты."""
     all_aircraft = storage.get_aircraft()
 
-    print(
-        f"\n Все сохраненные самолеты "
-        f"({len(all_aircraft)} шт.):"
-    )
+    print(f"\n Все сохраненные самолеты " f"({len(all_aircraft)} шт.):")
 
     if not all_aircraft:
         print("   Хранилище пусто.")
@@ -220,16 +189,19 @@ def show_all_aircraft(storage: JSONStorage) -> None:
 
 
 def get_numeric_range(
-    parameter_name: str,
-    unit: str
+    parameter_name: str, unit: str
 ) -> tuple[float, float] | None:
     """Запрашивает минимальное и максимальное значения диапазона."""
     try:
         minimum = float(
-            input(f"Введите минимальное значение ({unit}): ").strip()
+            input(
+                f"Введите минимальное значение {parameter_name} ({unit}): "
+            ).strip()
         )
         maximum = float(
-            input(f"Введите максимальное значение ({unit}): ").strip()
+            input(
+                f"Введите максимальное значение {parameter_name} ({unit}): "
+            ).strip()
         )
 
         if minimum < 0 or maximum < 0:
@@ -262,19 +234,14 @@ def show_aircraft_by_speed(storage: JSONStorage) -> None:
         if minimum <= aircraft.speed <= maximum
     ]
 
-    print(
-        f"\n Самолеты со скоростью от {minimum:g} "
-        f"до {maximum:g} м/с:"
-    )
+    print(f"\n Самолеты со скоростью от {minimum:g} " f"до {maximum:g} м/с:")
 
     if not aircraft_list:
         print("   Самолеты в заданном диапазоне не найдены.")
         return
 
     # Сортируем по скорости, используя is_faster_than().
-    aircraft_list.sort(
-        key=lambda aircraft: aircraft.speed
-    )
+    aircraft_list.sort(key=lambda aircraft: aircraft.speed)
 
     for aircraft in aircraft_list:
         print(f"   - {aircraft}")
@@ -288,9 +255,7 @@ def show_aircraft_by_altitude(storage: JSONStorage) -> None:
         print("Список самолетов пуст.")
         return
 
-    altitude_range = get_numeric_range(
-        "высоты", "м"
-    )
+    altitude_range = get_numeric_range("высоты", "м")
 
     if altitude_range is None:
         return
@@ -316,9 +281,7 @@ def show_aircraft_by_altitude(storage: JSONStorage) -> None:
 
 def delete_aircraft_by_callsign(storage: JSONStorage) -> None:
     """Удаляет самолет по позывному."""
-    callsign = input(
-        "Введите позывной самолета для удаления: "
-    ).strip()
+    callsign = input("Введите позывной самолета для удаления: ").strip()
 
     if not callsign:
         print("Ошибка: позывной не может быть пустым.")
@@ -343,11 +306,7 @@ def delete_aircraft_by_callsign(storage: JSONStorage) -> None:
     print(f"Самолет с позывным '{callsign}' успешно удален.")
 
 
-
-def handle_menu_choice(
-    choice: str,
-    storage: JSONStorage
-) -> bool:
+def handle_menu_choice(choice: str, storage: JSONStorage) -> bool:
     """
     Обрабатывает выбор пользователя.
 
@@ -376,10 +335,7 @@ def handle_menu_choice(
         return False
 
     else:
-        print(
-            "Неверный выбор. "
-            "Пожалуйста, введите число от 1 до 7."
-        )
+        print("Неверный выбор. " "Пожалуйста, введите число от 1 до 7.")
 
     return True
 
@@ -400,15 +356,10 @@ def run_interactive_cli():
 
     try:
         aircraft_list = load_aircraft_from_api(
-            nominatim_api,
-            opensky_api,
-            country_name
+            nominatim_api, opensky_api, country_name
         )
 
-        save_aircraft(
-            storage,
-            aircraft_list
-        )
+        save_aircraft(storage, aircraft_list)
 
     except requests.exceptions.RequestException as e:
         print(f"\n Ошибка сети: {e}")
