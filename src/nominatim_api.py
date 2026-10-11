@@ -9,9 +9,7 @@ class NominatimAPI(APIAdapter):
         self.url = "https://nominatim.openstreetmap.org/search"
 
     def get_data(self, country: str) -> list:
-        headers = {
-            "User-Agent": "test-app/1.0"
-        }
+        headers = {"User-Agent": "test-app/1.0"}
 
         params = {
             "country": country,
@@ -19,21 +17,13 @@ class NominatimAPI(APIAdapter):
             "limit": 1,
         }
 
-        response = get(
-            url=self.url,
-            params=params,
-            headers=headers
-        )
+        response = get(url=self.url, params=params, headers=headers)
 
         response.raise_for_status()
 
         data = response.json()
 
         if not data:
-            raise ValueError(
-                f"Не удалось найти координаты страны: {country}"
-            )
+            raise ValueError(f"Не удалось найти координаты страны: {country}")
 
         return data[0]["boundingbox"]
-
-

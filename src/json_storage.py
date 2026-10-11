@@ -12,7 +12,7 @@ class JSONStorage(BaseStorage):
     """Реализация хранения данных в JSON-файле."""
 
     def __init__(self, filename: str = "aircraft_data.json"):
-    
+
         save_dir = Path(__file__).parent.parent / "data"
         save_dir.mkdir(parents=True, exist_ok=True)
         self.file_path = save_dir / filename
@@ -22,7 +22,7 @@ class JSONStorage(BaseStorage):
 
     def _load_data(self) -> list:
         try:
-            with open(self.file_path, 'r', encoding='utf-8') as f:
+            with open(self.file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             if not isinstance(data, list):
@@ -30,7 +30,7 @@ class JSONStorage(BaseStorage):
                 return []
 
             return data
-        
+
         except FileNotFoundError:
             logger.error(f"Файл не найден: {self.file_path}")
             return []
@@ -39,9 +39,8 @@ class JSONStorage(BaseStorage):
             logger.error(f"Ошибка парсинга JSON: {e}")
             return []
 
-        
     def _save_data(self, data: list):
-        with open(self.file_path, 'w', encoding='utf-8') as f:
+        with open(self.file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
 
     def add_aircraft(self, aircraft: Aircraft) -> bool:
@@ -51,9 +50,7 @@ class JSONStorage(BaseStorage):
         и False, если самолет с таким позывным уже существует.
         """
         if not isinstance(aircraft, Aircraft):
-            raise TypeError(
-            "Можно добавлять только объекты класса Aircraft."
-            )
+            raise TypeError("Можно добавлять только объекты класса Aircraft.")
 
         data = self._load_data()
 
@@ -75,7 +72,7 @@ class JSONStorage(BaseStorage):
                 )
 
                 return False
-                
+
         data.append(aircraft.to_dict())
         self._save_data(data)
 
@@ -128,7 +125,8 @@ class JSONStorage(BaseStorage):
             match = True
             for key, value in criteria.items():
                 if key in item:
-                    # Для строк делаем нечувствительный к регистру поиск подстроки
+                    # Для строк делаем нечувствительный к регистру
+                    #  поиск подстроки
                     if isinstance(value, str) and isinstance(item[key], str):
                         if value.lower() not in item[key].lower():
                             match = False
@@ -146,7 +144,10 @@ class JSONStorage(BaseStorage):
         for item in data:
             match = False
             for key, value in criteria.items():
-                if key in item and str(item[key]).lower() == str(value).lower():
+                if (
+                    key in item
+                    and str(item[key]).lower() == str(value).lower()
+                ):
                     match = True
                     break
             if not match:
@@ -155,4 +156,3 @@ class JSONStorage(BaseStorage):
 
     def load_aircraft(self) -> list[Aircraft]:
         raise NotImplementedError()
-

@@ -10,4 +10,3 @@ def test_api_adapter_cannot_be_instantiated():
 def test_base_storage_cannot_be_instantiated():
     with pytest.raises(TypeError):
         BaseStorage()
-

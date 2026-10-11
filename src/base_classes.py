@@ -25,7 +25,7 @@ class BaseStorage(ABC):
     @abstractmethod
     def load_aircraft(self) -> list[Aircraft]:
         pass
-    
+
     @abstractmethod
     def get_aircraft(self, **criteria) -> list:
         pass
@@ -33,4 +33,3 @@ class BaseStorage(ABC):
     @abstractmethod
     def delete_aircraft(self, **criteria) -> None:
         pass
-

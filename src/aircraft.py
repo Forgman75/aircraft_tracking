@@ -5,7 +5,9 @@ from functools import total_ordering
 class Aircraft:
     """Класс, представляющий самолет с валидацией и методами сравнения."""
 
-    def __init__(self, country: str, callsign: str, speed: float, altitude: float):
+    def __init__(
+        self, country: str, callsign: str, speed: float, altitude: float
+    ):
         self.country = self._validate_str(country, "Страна регистрации")
         self.callsign = self._validate_str(callsign, "Позывной")
         self.speed = self._validate_float(speed, "Скорость полета")
@@ -26,7 +28,9 @@ class Aircraft:
                 raise ValueError(f"{field_name} не может быть отрицательной.")
             return val
         except (TypeError, ValueError):
-            raise ValueError(f"{field_name} должна быть неотрицательным числом.")
+            raise ValueError(
+                f"{field_name} должна быть неотрицательным числом."
+            )
 
     # Сравнение по высоте (используется для сортировки)
     def __lt__(self, other):
@@ -45,7 +49,7 @@ class Aircraft:
         return self.altitude == other.altitude and self.speed == other.speed
 
     # Дополнительный метод для сравнения по скорости
-    def is_faster_than(self, other: 'Aircraft') -> bool:
+    def is_faster_than(self, other: "Aircraft") -> bool:
         if not isinstance(other, Aircraft):
             raise TypeError("Сравнивать можно только с объектом Aircraft")
         return self.speed > other.speed
@@ -55,11 +59,11 @@ class Aircraft:
             "country": self.country,
             "callsign": self.callsign,
             "speed": self.speed,
-            "altitude": self.altitude
+            "altitude": self.altitude,
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'Aircraft':
+    def from_dict(cls, data: dict) -> "Aircraft":
         return cls(**data)
 
     @classmethod
@@ -81,7 +85,7 @@ class Aircraft:
         for item in raw_api_data:
             if len(item) < 14:
                 continue
-                   
+
             try:
                 aircraft_dict = {
                     "country": item[2],
@@ -105,7 +109,7 @@ class Aircraft:
             f"speed={self.speed}, "
             f"altitude={self.altitude})"
         )
-    
+
     def __str__(self):
         return (
             f"Позывной: {self.callsign:8} "

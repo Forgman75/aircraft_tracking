@@ -16,10 +16,7 @@ class OpenSkyAPI(APIAdapter):
             "lomax": boundingbox[3],
         }
 
-        response = get(
-            url=self.url,
-            params=params
-        )
+        response = get(url=self.url, params=params)
 
         if response.status_code == 429:
             raise RuntimeError("Превышен лимит запросов к OpenSky Network.")
@@ -31,4 +28,4 @@ class OpenSkyAPI(APIAdapter):
         states_data = data.get("states")
         if states_data:
             return states_data
-        return []       
+        return []
