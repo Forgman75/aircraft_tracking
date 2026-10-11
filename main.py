@@ -3,47 +3,7 @@ from src.nominatim_api import NominatimAPI
 from src.opensky_api import OpenSkyAPI
 from src.aircraft import Aircraft
 from src.json_storage import JSONStorage
-
-nominatim = NominatimAPI()
-opensky = OpenSkyAPI()
-
-country = "Canada"
-
-boundingbox = nominatim.get_data(country)
-aircraftes_data = opensky.get_data(boundingbox)
-aircraftes = Aircraft.cast_to_object_list(aircraftes_data)
-
-
-print("Координаты страны:", boundingbox)
-print("Данные о самолетах:", aircraftes)
-
-# Создаем хранилище
-storage = JSONStorage("planes.json")
-
-# Создаем самолеты
-plane1 = Aircraft("Russia", "AFL101", 250.0, 10000.0)
-plane2 = Aircraft("Germany", "DLH404", 230.0, 9500.0)
-plane3 = Aircraft("Russia", "AFL202", 270.0, 11000.0)
-
-# Добавляем
-storage.add_aircraft(plane1)
-storage.add_aircraft(plane2)
-storage.add_aircraft(plane3)
-
-# Ищем все японские самолеты
-russian = storage.get_aircraft(country="ger")
-print(f"Найдено немецких: {len(russian)}")  # 2
-
-# Ищем высокоскоростные
-fast = storage.get_aircraft(speed=270.0)
-print(f"Найдено быстрых: {len(fast)}")
-
-# Удаляем все канадские
-storage.delete_aircraft(country="Russia")
-
-# Проверяем, что осталось
-all_planes = storage.get_aircraft()
-print(f"Всего осталось: {len(all_planes)}")
+from src.csv_storage import CSVStorage
 
 
 def print_welcome():
@@ -116,13 +76,15 @@ def show_menu():
     print("4. Фильтрация самолетов по диапазону высот")
     print("5. Фильтрация самолетов по диапазону скоростей")
     print("6. Удалить самолет по позывному")
-    print("7. Выход")
+    print("7. Экспортировать самолеты в CSV")
+    print("8. Импортировать самолеты из CSV")
+    print("9. Выход")
     print("-" * 60)
 
 
 def get_menu_choice() -> str:
     """Получает выбор пользователя."""
-    return input("Выберите действие (1-7): ").strip()
+    return input("Выберите действие (1-9): ").strip()
 
 
 def show_top_aircraft(storage: JSONStorage) -> None:
@@ -306,7 +268,50 @@ def delete_aircraft_by_callsign(storage: JSONStorage) -> None:
     print(f"Самолет с позывным '{callsign}' успешно удален.")
 
 
-def handle_menu_choice(choice: str, storage: JSONStorage) -> bool:
+def export_aircraft_to_csv(
+    storage: JSONStorage,
+    csv_storage: CSVStorage,
+) -> None:
+    """Экспортирует самолеты из JSON-хранилища в CSV."""
+    aircraft_list = storage.get_aircraft()
+
+    if not aircraft_list:
+        print("Нет самолетов для экспорта.")
+        return
+
+    csv_storage.save_aircraft(aircraft_list)
+    print("Самолеты успешно экспортированы в CSV.")
+
+
+def import_aircraft_from_csv(
+    csv_storage: CSVStorage,
+    storage: JSONStorage,
+) -> None:
+    """Импортирует самолеты из CSV в JSON-хранилище."""
+    try:
+        
+        aircraft_list = csv_storage.load_aircraft()
+
+        if not aircraft_list:
+            print("В CSV-файле нет корректных записей.")
+            return
+
+        storage.save_aircraft(aircraft_list)
+
+        print(
+            f"Обработано самолетов: {len(aircraft_list)}. "
+            "Новые записи добавлены в JSON-хранилище."
+        )
+
+    except FileNotFoundError:
+        print("CSV-файл не найден.")
+    except (OSError, ValueError) as error:
+        print(f"Ошибка чтения CSV: {error}")
+
+
+def handle_menu_choice(
+    choice: str, storage: JSONStorage, csv_storage: CSVStorage
+) -> bool:
     """
     Обрабатывает выбор пользователя.
 
@@ -331,11 +336,17 @@ def handle_menu_choice(choice: str, storage: JSONStorage) -> bool:
         delete_aircraft_by_callsign(storage)
 
     elif choice == "7":
+        export_aircraft_to_csv(storage, csv_storage)
+
+    elif choice == "8":
+        import_aircraft_from_csv(csv_storage, storage)
+
+    elif choice == "9":
         print("Выход из программы. До свидания!")
         return False
 
     else:
-        print("Неверный выбор. " "Пожалуйста, введите число от 1 до 7.")
+        print("Неверный выбор. " "Пожалуйста, введите число от 1 до 9.")
 
     return True
 
@@ -346,9 +357,10 @@ def run_interactive_cli():
     nominatim_api = NominatimAPI()
     opensky_api = OpenSkyAPI()
     storage = JSONStorage()
+    csv_storage = CSVStorage()
 
     print_welcome()
-
+    
     country_name = get_country_name()
 
     if country_name is None:
@@ -382,7 +394,7 @@ def run_interactive_cli():
 
         choice = get_menu_choice()
 
-        if not handle_menu_choice(choice, storage):
+        if not handle_menu_choice(choice, storage, csv_storage):
             break
 
 
