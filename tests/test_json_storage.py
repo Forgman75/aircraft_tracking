@@ -89,3 +89,77 @@ def test_load_data_handles_corrupted_json(storage, caplog):
     # Метод должен вернуть пустой список и залогировать ошибку
     result = storage._load_data()
     assert result == []
+
+
+def test_save_aircraft_saves_all_aircraft(
+    json_storage, aircraft_list
+):
+    """Все новые самолеты должны сохраниться."""
+    added = json_storage.save_aircraft(aircraft_list)
+
+    assert added == 2
+
+    saved = json_storage.get_aircraft()
+
+    assert len(saved) == 2
+    assert {a.callsign for a in saved} == {"DLH123", "AFR456"}
+
+
+def test_save_aircraft_skips_duplicates(
+    json_storage, aircraft_list
+):
+    """Повторное добавление не должно создавать дубликаты."""
+    first_added = json_storage.save_aircraft(aircraft_list)
+    second_added = json_storage.save_aircraft(aircraft_list)
+
+    assert first_added == 2
+    assert second_added == 0
+    assert len(json_storage.get_aircraft()) == 2
+
+
+def test_save_aircraft_ignores_callsign_case(
+    json_storage, aircraft_list
+):
+    """Позывные должны сравниваться без учета регистра."""
+    json_storage.save_aircraft(aircraft_list)
+
+    duplicate = Aircraft(
+        country="Germany",
+        callsign="dlh123",
+        speed=250.0,
+        altitude=11000.0,
+    )
+
+    added = json_storage.save_aircraft([duplicate])
+
+    assert added == 0
+    assert len(json_storage.get_aircraft()) == 2
+
+
+def test_save_aircraft_empty_list(json_storage):
+    """Пустой список не должен изменять содержимое файла."""
+    added = json_storage.save_aircraft([])
+
+    assert added == 0
+    assert json_storage.get_aircraft() == []
+
+
+def test_save_aircraft_preserves_existing_data(
+    json_storage, aircraft_list
+):
+    """Новые самолеты должны добавляться к существующим."""
+    json_storage.save_aircraft(aircraft_list)
+
+    third_aircraft = Aircraft(
+        country="Netherlands",
+        callsign="KLM789",
+        speed=220.0,
+        altitude=9000.0,
+    )
+
+    added = json_storage.save_aircraft([third_aircraft])
+
+    assert added == 1
+    assert len(json_storage.get_aircraft()) == 3
+
+
